@@ -170,130 +170,8 @@ def find_file(primary_path, alternative_paths):
     return None
 
 
-def create_download_link(file_path, filename):
-    """Create a download link for the PDF"""
-    try:
-        with open(file_path, "rb") as f:
-            bytes_data = f.read()
-        b64_pdf = base64.b64encode(bytes_data).decode()
-        href = f'<a href="data:application/pdf;base64,{b64_pdf}" download="{filename}" class="download-button">📥 Download PDF</a>'
-        return href
-    except Exception as e:
-        return f"Error creating download link: {str(e)}"
-
-
-def display_pdf_method_1_iframe(pdf_path):
-    """Method 1: Standard iframe approach"""
-    try:
-        with open(pdf_path, "rb") as f:
-            base64_pdf = base64.b64encode(f.read()).decode("utf-8")
-
-        # Try different iframe configurations
-        pdf_display = f"""
-        <div class="pdf-container">
-            <iframe 
-                src="data:application/pdf;base64,{base64_pdf}" 
-                width="100%" 
-                height="800" 
-                type="application/pdf"
-                style="border: none;">
-                <p>Your browser does not support PDFs. 
-                   <a href="data:application/pdf;base64,{base64_pdf}" download="document.pdf">Download the PDF</a>
-                </p>
-            </iframe>
-        </div>
-        """
-        st.markdown(pdf_display, unsafe_allow_html=True)
-        return True
-    except Exception as e:
-        st.error(f"Iframe method failed: {str(e)}")
-        return False
-
-
-def display_pdf_method_2_embed(pdf_path):
-    """Method 2: HTML embed tag approach"""
-    try:
-        with open(pdf_path, "rb") as f:
-            base64_pdf = base64.b64encode(f.read()).decode("utf-8")
-
-        pdf_display = f"""
-        <div class="pdf-container">
-            <embed 
-                src="data:application/pdf;base64,{base64_pdf}" 
-                width="100%" 
-                height="800" 
-                type="application/pdf">
-            </embed>
-        </div>
-        """
-        st.markdown(pdf_display, unsafe_allow_html=True)
-        return True
-    except Exception as e:
-        st.error(f"Embed method failed: {str(e)}")
-        return False
-
-
-def display_pdf_method_3_object(pdf_path):
-    """Method 3: HTML object tag approach"""
-    try:
-        with open(pdf_path, "rb") as f:
-            base64_pdf = base64.b64encode(f.read()).decode("utf-8")
-
-        pdf_display = f"""
-        <div class="pdf-container">
-            <object 
-                data="data:application/pdf;base64,{base64_pdf}" 
-                type="application/pdf" 
-                width="100%" 
-                height="800">
-                <p>PDF cannot be displayed. 
-                   <a href="data:application/pdf;base64,{base64_pdf}" download="document.pdf">Download PDF</a>
-                </p>
-            </object>
-        </div>
-        """
-        st.markdown(pdf_display, unsafe_allow_html=True)
-        return True
-    except Exception as e:
-        st.error(f"Object method failed: {str(e)}")
-        return False
-
-
-def display_pdf_method_4_streamlit_native(pdf_path):
-    """Method 4: Use Streamlit's native file handling"""
-    try:
-        with open(pdf_path, "rb") as f:
-            pdf_bytes = f.read()
-
-        # Create a download button
-        st.download_button(
-            label="📥 Download PDF",
-            data=pdf_bytes,
-            file_name="Pumpkin_Porters_Report.pdf",
-            mime="application/pdf",
-        )
-
-        # Try to display with st.write (sometimes works)
-        try:
-            st.write("**PDF Preview:**")
-            st.write(f"File size: {len(pdf_bytes)} bytes")
-
-            # Create a manual link
-            b64_pdf = base64.b64encode(pdf_bytes).decode()
-            href = f'<a href="data:application/pdf;base64,{b64_pdf}" target="_blank">🔗 Open PDF in New Tab</a>'
-            st.markdown(href, unsafe_allow_html=True)
-
-        except Exception:
-            pass
-
-        return True
-    except Exception as e:
-        st.error(f"Streamlit native method failed: {str(e)}")
-        return False
-
-
 def display_pdf(pdf_path):
-    """Display PDF with multiple fallback methods"""
+    """Simple PDF access - Download and Open in New Tab only"""
     try:
         # Find the actual file location
         actual_pdf_path = find_file(pdf_path, ALTERNATIVE_PDF_PATHS)
@@ -303,127 +181,93 @@ def display_pdf(pdf_path):
             st.markdown(
                 f"""
                 <div class="file-info">
-                    📁 <strong>File loaded successfully:</strong> {actual_pdf_path}
+                    📁 <strong>File found:</strong> {actual_pdf_path}
                 </div>
             """,
                 unsafe_allow_html=True,
             )
 
-            # Get file size for debugging
+            # Get file size
             file_size = os.path.getsize(actual_pdf_path)
             st.info(
                 f"📊 PDF file size: {file_size:,} bytes ({file_size / 1024 / 1024:.2f} MB)"
             )
 
-            # Method selection
-            st.subheader("PDF Display Options")
-            col1, col2, col3, col4 = st.columns(4)
+            # Read the PDF file
+            with open(actual_pdf_path, "rb") as f:
+                pdf_bytes = f.read()
 
-            with col1:
-                if st.button("🖼️ Iframe Method"):
-                    st.session_state.pdf_display_method = "iframe"
-            with col2:
-                if st.button("📎 Embed Method"):
-                    st.session_state.pdf_display_method = "embed"
-            with col3:
-                if st.button("🎯 Object Method"):
-                    st.session_state.pdf_display_method = "object"
-            with col4:
-                if st.button("📁 Download Only"):
-                    st.session_state.pdf_display_method = "download"
+            # Create base64 encoding
+            base64_pdf = base64.b64encode(pdf_bytes).decode()
 
-            st.markdown("---")
-
-            # Try the selected method
-            if st.session_state.pdf_display_method == "iframe":
-                st.write("**Trying Iframe Method:**")
-                if not display_pdf_method_1_iframe(actual_pdf_path):
-                    st.warning(
-                        "Iframe method failed. Browser may not support embedded PDFs."
-                    )
-
-            elif st.session_state.pdf_display_method == "embed":
-                st.write("**Trying Embed Method:**")
-                if not display_pdf_method_2_embed(actual_pdf_path):
-                    st.warning("Embed method failed.")
-
-            elif st.session_state.pdf_display_method == "object":
-                st.write("**Trying Object Method:**")
-                if not display_pdf_method_3_object(actual_pdf_path):
-                    st.warning("Object method failed.")
-
-            else:  # download method
-                st.write("**Download Method:**")
-                display_pdf_method_4_streamlit_native(actual_pdf_path)
-
-            # Always provide download option
-            st.markdown("---")
-            st.subheader("Alternative Access")
-
-            # Create download link
-            download_link = create_download_link(
-                actual_pdf_path, "Pumpkin_Porters_Report.pdf"
+            # Download button (most reliable option)
+            st.download_button(
+                label="📥 Download PDF Document",
+                data=pdf_bytes,
+                file_name="Pumpkin_Porters_Report.pdf",
+                mime="application/pdf",
+                use_container_width=True,
+                help="Download the PDF to view in your preferred PDF viewer",
             )
-            st.markdown(download_link, unsafe_allow_html=True)
 
-            # Browser compatibility info
-            st.info("""
-            **🔍 Troubleshooting PDF Display Issues:**
-            
-            - **Chrome/Edge**: Usually works best with iframe method
-            - **Firefox**: May need embed or object method  
-            - **Safari**: Often requires download method
-            - **Mobile browsers**: Usually need download method
-            - **Streamlit Cloud**: iframe method sometimes blocked by browser security
-            
-            If PDF doesn't display, try different methods above or use the download button.
-            """)
+            # Optional: Try to open in new tab (may not work on all browsers/deployments)
+            with st.expander(
+                "🔗 Advanced: Try to Open in Browser (may not work on all devices)",
+                expanded=False,
+            ):
+                st.warning(
+                    "⚠️ This may not work on Streamlit Cloud due to browser security restrictions"
+                )
+                pdf_url = f"data:application/pdf;base64,{base64_pdf}"
+                st.markdown(
+                    f'<a href="{pdf_url}" target="_blank" style="display: inline-block; '
+                    f"padding: 0.5rem 1rem; background-color: #ff6b35; color: white; "
+                    f"text-decoration: none; border-radius: 0.5rem; text-align: center; "
+                    f'width: 100%; box-sizing: border-box;">🔗 Try to Open in New Tab</a>',
+                    unsafe_allow_html=True,
+                )
+                st.caption("If this doesn't work, please use the download button above")
+
+            st.markdown("---")
+            st.success(
+                "✅ PDF ready! Use the buttons above to download or view the document."
+            )
 
         else:
             st.error("📄 PDF file not found!")
-            st.markdown(
-                """
-                <div class="file-info">
-                    <strong>Troubleshooting Tips:</strong><br>
-                    1. Make sure the PDF file is uploaded to your repository<br>
-                    2. Check that the file path is correct<br>
-                    3. Ensure the file is in the same directory structure as your code<br>
-                    4. Verify the file name matches exactly (including spaces and hyphens)
-                </div>
-            """,
-                unsafe_allow_html=True,
-            )
+            st.markdown("""
+                **Troubleshooting:**
+                - Make sure the PDF file is uploaded to your repository
+                - Check that the file path is correct
+                - Verify the file name matches exactly
+            """)
 
-            # Provide file upload option as fallback
+            # File upload fallback
             st.markdown("---")
             st.subheader("Upload PDF File")
-            uploaded_file = st.file_uploader(
-                "Upload the PDF file here as a temporary solution:",
-                type="pdf",
-                help="This will display the PDF for this session only",
-            )
+            uploaded_file = st.file_uploader("Upload the PDF file here:", type="pdf")
 
             if uploaded_file is not None:
-                # Try to display uploaded PDF
-                try:
-                    base64_pdf = base64.b64encode(uploaded_file.read()).decode("utf-8")
-                    pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="800" type="application/pdf"></iframe>'
-                    st.markdown(pdf_display, unsafe_allow_html=True)
-                    st.success("✅ PDF uploaded and displayed successfully!")
-                except Exception as e:
-                    st.error(f"Error displaying uploaded PDF: {str(e)}")
-                    st.download_button(
-                        label="📥 Download Uploaded PDF",
-                        data=uploaded_file.getvalue(),
-                        file_name=uploaded_file.name,
-                        mime="application/pdf",
-                    )
+                # Create download button for uploaded file
+                st.download_button(
+                    label="📥 Download Uploaded PDF",
+                    data=uploaded_file.getvalue(),
+                    file_name=uploaded_file.name,
+                    mime="application/pdf",
+                )
+
+                # Create open in new tab for uploaded file
+                base64_pdf = base64.b64encode(uploaded_file.getvalue()).decode()
+                pdf_url = f"data:application/pdf;base64,{base64_pdf}"
+                st.markdown(
+                    f'<a href="{pdf_url}" target="_blank" style="display: inline-block; '
+                    f"padding: 0.5rem 1rem; background-color: #ff6b35; color: white; "
+                    f'text-decoration: none; border-radius: 0.5rem; text-align: center;">🔗 Open Uploaded PDF in New Tab</a>',
+                    unsafe_allow_html=True,
+                )
 
     except Exception as e:
-        st.error(f"❌ Error displaying PDF: {str(e)}")
-        st.info(
-            "💡 **Deployment Tip**: Make sure your PDF file is included in your Git repository and the path is correct for Streamlit Cloud."
-        )
+        st.error(f"❌ Error loading PDF: {str(e)}")
 
 
 def display_audio(audio_path):
