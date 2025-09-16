@@ -2,6 +2,7 @@ import streamlit as st
 import base64
 import os
 import asyncio
+from pathlib import Path
 
 from strategy_kit_core_model.utils.constants import pumpkin_porters_transcript
 
@@ -85,6 +86,14 @@ st.markdown(
     background-color: rgba(128, 128, 128, 0.3);
     border-radius: 0.5rem;
 }
+
+.file-info {
+    background-color: #f0f2f6;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    border-left: 4px solid #1f77b4;
+    margin: 1rem 0;
+}
 </style>
 """,
     unsafe_allow_html=True,
@@ -100,23 +109,157 @@ CHATBOT_ENABLED = False
 # Your transcript string (replace this with your actual transcript)
 TRANSCRIPT = pumpkin_porters_transcript
 
-# File paths
-PDF_PATH = "pdf/Pumpkin Porters - Social Performance Progress-Aug-report-v1.pdf"
-AUDIO_PATH = "audio/audio.wav"
+# File paths - Using relative paths and Path for better cross-platform compatibility
+BASE_DIR = Path(__file__).parent
+PDF_PATH = (
+    BASE_DIR / "pdf" / "Pumpkin Porters - Social Performance Progress-Aug-report-v1.pdf"
+)
+AUDIO_PATH = BASE_DIR / "audio" / "audio.wav"
+
+# Alternative file paths to check
+ALTERNATIVE_PDF_PATHS = [
+    "pdf/Pumpkin Porters - Social Performance Progress-Aug-report-v1.pdf",
+    "./pdf/Pumpkin Porters - Social Performance Progress-Aug-report-v1.pdf",
+    "Pumpkin Porters - Social Performance Progress-Aug-report-v1.pdf",
+    "./Pumpkin Porters - Social Performance Progress-Aug-report-v1.pdf",
+]
+
+ALTERNATIVE_AUDIO_PATHS = [
+    "audio/audio.wav",
+    "./audio/audio.wav",
+    "audio.wav",
+    "./audio.wav",
+]
+
+
+def find_file(primary_path, alternative_paths):
+    """Find file from multiple possible locations"""
+    # Check primary path first
+    if os.path.exists(primary_path):
+        return str(primary_path)
+
+    # Check alternative paths
+    for path in alternative_paths:
+        if os.path.exists(path):
+            return path
+
+    return None
 
 
 def display_pdf(pdf_path):
-    """Display PDF from local file"""
+    """Display PDF from local file with better error handling"""
     try:
-        if os.path.exists(pdf_path):
-            with open(pdf_path, "rb") as f:
+        # Find the actual file location
+        actual_pdf_path = find_file(pdf_path, ALTERNATIVE_PDF_PATHS)
+
+        if actual_pdf_path:
+            with open(actual_pdf_path, "rb") as f:
                 base64_pdf = base64.b64encode(f.read()).decode("utf-8")
             pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="800" type="application/pdf"></iframe>'
             st.markdown(pdf_display, unsafe_allow_html=True)
+
+            # Show file info
+            st.markdown(
+                f"""
+                <div class="file-info">
+                    📁 <strong>File loaded successfully:</strong> {actual_pdf_path}
+                </div>
+            """,
+                unsafe_allow_html=True,
+            )
+
         else:
-            st.error(f"PDF file not found at: {pdf_path}")
+            st.error("📄 PDF file not found!")
+            st.markdown(
+                """
+                <div class="file-info">
+                    <strong>Troubleshooting Tips:</strong><br>
+                    1. Make sure the PDF file is uploaded to your repository<br>
+                    2. Check that the file path is correct<br>
+                    3. Ensure the file is in the same directory structure as your code<br>
+                    4. Verify the file name matches exactly (including spaces and hyphens)
+                </div>
+            """,
+                unsafe_allow_html=True,
+            )
+
+            # Show current directory contents for debugging
+            st.write("**Current directory contents:**")
+            try:
+                current_files = os.listdir(".")
+                st.write(current_files)
+
+                # Check if pdf folder exists
+                if "pdf" in current_files:
+                    st.write("**Contents of pdf folder:**")
+                    pdf_files = os.listdir("pdf")
+                    st.write(pdf_files)
+                else:
+                    st.warning("⚠️ 'pdf' folder not found in current directory")
+
+            except Exception as e:
+                st.error(f"Error listing directory contents: {str(e)}")
+
+            # Provide file upload option as fallback
+            st.markdown("---")
+            st.subheader("Upload PDF File")
+            uploaded_file = st.file_uploader(
+                "Upload the PDF file here as a temporary solution:",
+                type="pdf",
+                help="This will display the PDF for this session only",
+            )
+
+            if uploaded_file is not None:
+                # Display uploaded PDF
+                base64_pdf = base64.b64encode(uploaded_file.read()).decode("utf-8")
+                pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="800" type="application/pdf"></iframe>'
+                st.markdown(pdf_display, unsafe_allow_html=True)
+                st.success("✅ PDF uploaded and displayed successfully!")
+
     except Exception as e:
-        st.error(f"Error displaying PDF: {str(e)}")
+        st.error(f"❌ Error displaying PDF: {str(e)}")
+        st.info(
+            "💡 **Deployment Tip**: Make sure your PDF file is included in your Git repository and the path is correct for Streamlit Cloud."
+        )
+
+
+def display_audio(audio_path):
+    """Display audio with better error handling"""
+    try:
+        # Find the actual file location
+        actual_audio_path = find_file(audio_path, ALTERNATIVE_AUDIO_PATHS)
+
+        if actual_audio_path:
+            with open(actual_audio_path, "rb") as audio_file:
+                st.audio(audio_file.read(), format="audio/wav")
+
+            st.markdown(
+                f"""
+                <div class="file-info">
+                    🔊 <strong>Audio file loaded:</strong> {actual_audio_path}
+                </div>
+            """,
+                unsafe_allow_html=True,
+            )
+        else:
+            st.error("🔊 Audio file not found!")
+            st.info(
+                "Please make sure the audio.wav file is uploaded to your repository in the correct location."
+            )
+
+            # Provide file upload option as fallback
+            uploaded_audio = st.file_uploader(
+                "Upload the audio file here:",
+                type=["wav", "mp3", "m4a"],
+                help="Upload audio file as a temporary solution",
+            )
+
+            if uploaded_audio is not None:
+                st.audio(uploaded_audio.read())
+                st.success("✅ Audio uploaded and ready to play!")
+
+    except Exception as e:
+        st.error(f"❌ Error loading audio: {str(e)}")
 
 
 def get_bot_response(user_input):
@@ -173,25 +316,11 @@ async def main():
     with tab2:
         st.header("Document Summary")
 
-        # Display transcript as summary
-
         st.subheader("🔊 Audio Summary")
-
-        if os.path.exists(AUDIO_PATH):
-            with open(AUDIO_PATH, "rb") as audio_file:
-                st.audio(audio_file.read(), format="audio/wav")
-        else:
-            st.error(f"Audio file not found at: {AUDIO_PATH}")
-            st.info("Please make sure the audio.wav file is in your project directory.")
-
-        st.markdown("</div>", unsafe_allow_html=True)
+        display_audio(AUDIO_PATH)
 
         st.write("**Transcript Summary:**")
         st.write(TRANSCRIPT)
-        st.markdown("</div>", unsafe_allow_html=True)
-
-        # Audio player
-        st.markdown('<div class="audio-container">', unsafe_allow_html=True)
 
     with tab3:
         st.header("Chat with Assistant")
@@ -207,9 +336,6 @@ async def main():
             """,
                 unsafe_allow_html=True,
             )
-
-            # Alternative: Use Streamlit's built-in warning
-            # st.warning("🔧 **Chatbot Temporarily Disabled**  \nWe're currently working on improvements. Please check back soon!")
         else:
             st.write("Ask me about the PDF document, summary, or audio features!")
 
