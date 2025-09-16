@@ -210,23 +210,121 @@ def display_pdf(pdf_path):
                 help="Download the PDF to view in your preferred PDF viewer",
             )
 
-            # Optional: Try to open in new tab (may not work on all browsers/deployments)
-            with st.expander(
-                "🔗 Advanced: Try to Open in Browser (may not work on all devices)",
-                expanded=False,
-            ):
-                st.warning(
-                    "⚠️ This may not work on Streamlit Cloud due to browser security restrictions"
-                )
+            # Browser-specific PDF opening options
+            st.markdown("---")
+            st.subheader("🌐 View PDF in Browser")
+
+            # Chrome-friendly approach
+            col1, col2 = st.columns(2)
+
+            with col1:
+                st.markdown("**For Chrome Users:**")
+                # Create a temporary download with auto-open intent
                 pdf_url = f"data:application/pdf;base64,{base64_pdf}"
+
+                # Use JavaScript to try opening PDF
+                chrome_script = f"""
+                <script>
+                function openPDFChrome() {{
+                    // Method 1: Try to open in new window
+                    var win = window.open();
+                    if (win) {{
+                        win.document.write('<iframe src="data:application/pdf;base64,{base64_pdf}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>');
+                        win.document.title = 'Pumpkin Porters Report';
+                    }} else {{
+                        // Fallback: Force download
+                        var link = document.createElement('a');
+                        link.href = 'data:application/pdf;base64,{base64_pdf}';
+                        link.download = 'Pumpkin_Porters_Report.pdf';
+                        link.click();
+                    }}
+                }}
+                </script>
+                <button onclick="openPDFChrome()" style="background-color: #4285f4; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; width: 100%;">
+                    🔗 Open PDF (Chrome)
+                </button>
+                """
+                st.markdown(chrome_script, unsafe_allow_html=True)
+                st.caption("Uses popup window for Chrome compatibility")
+
+            with col2:
+                st.markdown("**For Safari/Firefox:**")
+                # Standard data URL approach (works in Safari)
                 st.markdown(
                     f'<a href="{pdf_url}" target="_blank" style="display: inline-block; '
-                    f"padding: 0.5rem 1rem; background-color: #ff6b35; color: white; "
-                    f"text-decoration: none; border-radius: 0.5rem; text-align: center; "
-                    f'width: 100%; box-sizing: border-box;">🔗 Try to Open in New Tab</a>',
+                    f"background-color: #ff6b35; color: white; text-decoration: none; "
+                    f'padding: 10px 20px; border-radius: 5px; text-align: center; width: 100%; box-sizing: border-box;">'
+                    f"🔗 Open PDF (Safari/Firefox)</a>",
                     unsafe_allow_html=True,
                 )
-                st.caption("If this doesn't work, please use the download button above")
+                st.caption("Direct link method")
+
+            # Universal method using blob URL
+            st.markdown("---")
+            st.markdown("**Universal Method (Try this first):**")
+
+            universal_script = f"""
+            <script>
+            function openPDFUniversal() {{
+                try {{
+                    // Convert base64 to blob
+                    const base64Data = '{base64_pdf}';
+                    const byteCharacters = atob(base64Data);
+                    const byteNumbers = new Array(byteCharacters.length);
+                    for (let i = 0; i < byteCharacters.length; i++) {{
+                        byteNumbers[i] = byteCharacters.charCodeAt(i);
+                    }}
+                    const byteArray = new Uint8Array(byteNumbers);
+                    const blob = new Blob([byteArray], {{type: 'application/pdf'}});
+                    
+                    // Create blob URL
+                    const blobUrl = URL.createObjectURL(blob);
+                    
+                    // Open in new tab
+                    const newWindow = window.open(blobUrl, '_blank');
+                    if (!newWindow) {{
+                        // If popup blocked, create download link
+                        const link = document.createElement('a');
+                        link.href = blobUrl;
+                        link.download = 'Pumpkin_Porters_Report.pdf';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        URL.revokeObjectURL(blobUrl);
+                    }}
+                }} catch (error) {{
+                    alert('PDF opening failed. Please use the download button above.');
+                    console.error('PDF open error:', error);
+                }}
+            }}
+            </script>
+            <button onclick="openPDFUniversal()" style="background-color: #28a745; color: white; border: none; padding: 15px 30px; border-radius: 5px; cursor: pointer; width: 100%; font-size: 16px; font-weight: bold;">
+                🚀 Open PDF (All Browsers)
+            </button>
+            """
+            st.markdown(universal_script, unsafe_allow_html=True)
+            st.info(
+                "💡 This method converts the PDF to a blob URL which works better in Chrome"
+            )
+
+            # Troubleshooting info
+            with st.expander("🔧 Troubleshooting Guide"):
+                st.markdown("""
+                **If PDF doesn't open in Chrome:**
+                1. Check if popup blocker is enabled (disable it for this site)
+                2. Try the "Universal Method" button above
+                3. Some corporate networks block PDF viewing
+                4. Use the download button as a reliable fallback
+                
+                **Browser Compatibility:**
+                - ✅ **Safari**: Usually works with all methods
+                - ⚠️ **Chrome**: May block data URLs, try Universal Method
+                - ✅ **Firefox**: Usually works with direct link method
+                - ⚠️ **Edge**: Similar to Chrome, try Universal Method
+                - ❌ **Mobile browsers**: Usually need download method
+                """)
+
+            st.markdown("---")
 
             st.markdown("---")
             st.success(
@@ -280,14 +378,6 @@ def display_audio(audio_path):
             with open(actual_audio_path, "rb") as audio_file:
                 st.audio(audio_file.read(), format="audio/wav")
 
-            st.markdown(
-                f"""
-                <div class="file-info">
-                    🔊 <strong>Audio file loaded:</strong> {actual_audio_path}
-                </div>
-            """,
-                unsafe_allow_html=True,
-            )
         else:
             st.error("🔊 Audio file not found!")
             st.info(
@@ -353,15 +443,32 @@ async def main():
     )
 
     # Create tabs
-    tab1, tab2, tab3 = st.tabs(["📄 PDF Viewer", "📝 Summary", "💬 Chatbot"])
+    tab1, tab2 = st.tabs(["📝 Summary", "💬 Chatbot"])
 
     with tab1:
-        st.header("PDF Viewer")
-        st.subheader("Pumpkin Porters - Social Performance Progress Report")
-        display_pdf(PDF_PATH)
-
-    with tab2:
         st.header("Document Summary")
+
+        # Download PDF button
+        actual_pdf_path = find_file(PDF_PATH, ALTERNATIVE_PDF_PATHS)
+        if actual_pdf_path:
+            try:
+                with open(actual_pdf_path, "rb") as f:
+                    pdf_bytes = f.read()
+
+                st.download_button(
+                    label="📥 Download Strategy Kit PDF",
+                    data=pdf_bytes,
+                    file_name="StrategyKit_Pumpkin_Porters_Report.pdf",
+                    mime="application/pdf",
+                    use_container_width=True,
+                )
+                st.markdown("---")
+            except Exception as e:
+                st.error(f"Error loading PDF: {str(e)}")
+        else:
+            st.warning(
+                "PDF file not found. Please check if the file is uploaded to the repository."
+            )
 
         st.subheader("🔊 Audio Summary")
         display_audio(AUDIO_PATH)
@@ -369,7 +476,7 @@ async def main():
         st.write("**Transcript Summary:**")
         st.write(TRANSCRIPT)
 
-    with tab3:
+    with tab2:
         st.header("Chat with Assistant")
 
         # Show maintenance banner if chatbot is disabled
