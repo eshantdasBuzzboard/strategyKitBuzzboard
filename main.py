@@ -35,7 +35,7 @@ st.markdown(
 }
 
 .chat-message.user {
-    background-color: #000000
+    background-color: #000000;
     justify-content: flex-end;
 }
 
@@ -55,7 +55,7 @@ st.markdown(
 .audio-container {
     margin: 1rem 0;
     padding: 1rem;
-    background-color: ##000000;
+    background-color: #000000;
     border-radius: 0.5rem;
 }
 
@@ -94,6 +94,28 @@ st.markdown(
     border-left: 4px solid #1f77b4;
     margin: 1rem 0;
 }
+
+.pdf-container {
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    padding: 10px;
+    background-color: #f9f9f9;
+    margin: 10px 0;
+}
+
+.download-button {
+    background-color: #4CAF50;
+    border: none;
+    color: white;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 4px;
+}
 </style>
 """,
     unsafe_allow_html=True,
@@ -102,6 +124,8 @@ st.markdown(
 # Initialize session state
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
+if "pdf_display_method" not in st.session_state:
+    st.session_state.pdf_display_method = "iframe"
 
 # Configuration - Set this to False to enable chatbot
 CHATBOT_ENABLED = False
@@ -146,18 +170,135 @@ def find_file(primary_path, alternative_paths):
     return None
 
 
+def create_download_link(file_path, filename):
+    """Create a download link for the PDF"""
+    try:
+        with open(file_path, "rb") as f:
+            bytes_data = f.read()
+        b64_pdf = base64.b64encode(bytes_data).decode()
+        href = f'<a href="data:application/pdf;base64,{b64_pdf}" download="{filename}" class="download-button">📥 Download PDF</a>'
+        return href
+    except Exception as e:
+        return f"Error creating download link: {str(e)}"
+
+
+def display_pdf_method_1_iframe(pdf_path):
+    """Method 1: Standard iframe approach"""
+    try:
+        with open(pdf_path, "rb") as f:
+            base64_pdf = base64.b64encode(f.read()).decode("utf-8")
+
+        # Try different iframe configurations
+        pdf_display = f"""
+        <div class="pdf-container">
+            <iframe 
+                src="data:application/pdf;base64,{base64_pdf}" 
+                width="100%" 
+                height="800" 
+                type="application/pdf"
+                style="border: none;">
+                <p>Your browser does not support PDFs. 
+                   <a href="data:application/pdf;base64,{base64_pdf}" download="document.pdf">Download the PDF</a>
+                </p>
+            </iframe>
+        </div>
+        """
+        st.markdown(pdf_display, unsafe_allow_html=True)
+        return True
+    except Exception as e:
+        st.error(f"Iframe method failed: {str(e)}")
+        return False
+
+
+def display_pdf_method_2_embed(pdf_path):
+    """Method 2: HTML embed tag approach"""
+    try:
+        with open(pdf_path, "rb") as f:
+            base64_pdf = base64.b64encode(f.read()).decode("utf-8")
+
+        pdf_display = f"""
+        <div class="pdf-container">
+            <embed 
+                src="data:application/pdf;base64,{base64_pdf}" 
+                width="100%" 
+                height="800" 
+                type="application/pdf">
+            </embed>
+        </div>
+        """
+        st.markdown(pdf_display, unsafe_allow_html=True)
+        return True
+    except Exception as e:
+        st.error(f"Embed method failed: {str(e)}")
+        return False
+
+
+def display_pdf_method_3_object(pdf_path):
+    """Method 3: HTML object tag approach"""
+    try:
+        with open(pdf_path, "rb") as f:
+            base64_pdf = base64.b64encode(f.read()).decode("utf-8")
+
+        pdf_display = f"""
+        <div class="pdf-container">
+            <object 
+                data="data:application/pdf;base64,{base64_pdf}" 
+                type="application/pdf" 
+                width="100%" 
+                height="800">
+                <p>PDF cannot be displayed. 
+                   <a href="data:application/pdf;base64,{base64_pdf}" download="document.pdf">Download PDF</a>
+                </p>
+            </object>
+        </div>
+        """
+        st.markdown(pdf_display, unsafe_allow_html=True)
+        return True
+    except Exception as e:
+        st.error(f"Object method failed: {str(e)}")
+        return False
+
+
+def display_pdf_method_4_streamlit_native(pdf_path):
+    """Method 4: Use Streamlit's native file handling"""
+    try:
+        with open(pdf_path, "rb") as f:
+            pdf_bytes = f.read()
+
+        # Create a download button
+        st.download_button(
+            label="📥 Download PDF",
+            data=pdf_bytes,
+            file_name="Pumpkin_Porters_Report.pdf",
+            mime="application/pdf",
+        )
+
+        # Try to display with st.write (sometimes works)
+        try:
+            st.write("**PDF Preview:**")
+            st.write(f"File size: {len(pdf_bytes)} bytes")
+
+            # Create a manual link
+            b64_pdf = base64.b64encode(pdf_bytes).decode()
+            href = f'<a href="data:application/pdf;base64,{b64_pdf}" target="_blank">🔗 Open PDF in New Tab</a>'
+            st.markdown(href, unsafe_allow_html=True)
+
+        except Exception:
+            pass
+
+        return True
+    except Exception as e:
+        st.error(f"Streamlit native method failed: {str(e)}")
+        return False
+
+
 def display_pdf(pdf_path):
-    """Display PDF from local file with better error handling"""
+    """Display PDF with multiple fallback methods"""
     try:
         # Find the actual file location
         actual_pdf_path = find_file(pdf_path, ALTERNATIVE_PDF_PATHS)
 
         if actual_pdf_path:
-            with open(actual_pdf_path, "rb") as f:
-                base64_pdf = base64.b64encode(f.read()).decode("utf-8")
-            pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="800" type="application/pdf"></iframe>'
-            st.markdown(pdf_display, unsafe_allow_html=True)
-
             # Show file info
             st.markdown(
                 f"""
@@ -167,6 +308,76 @@ def display_pdf(pdf_path):
             """,
                 unsafe_allow_html=True,
             )
+
+            # Get file size for debugging
+            file_size = os.path.getsize(actual_pdf_path)
+            st.info(
+                f"📊 PDF file size: {file_size:,} bytes ({file_size / 1024 / 1024:.2f} MB)"
+            )
+
+            # Method selection
+            st.subheader("PDF Display Options")
+            col1, col2, col3, col4 = st.columns(4)
+
+            with col1:
+                if st.button("🖼️ Iframe Method"):
+                    st.session_state.pdf_display_method = "iframe"
+            with col2:
+                if st.button("📎 Embed Method"):
+                    st.session_state.pdf_display_method = "embed"
+            with col3:
+                if st.button("🎯 Object Method"):
+                    st.session_state.pdf_display_method = "object"
+            with col4:
+                if st.button("📁 Download Only"):
+                    st.session_state.pdf_display_method = "download"
+
+            st.markdown("---")
+
+            # Try the selected method
+            if st.session_state.pdf_display_method == "iframe":
+                st.write("**Trying Iframe Method:**")
+                if not display_pdf_method_1_iframe(actual_pdf_path):
+                    st.warning(
+                        "Iframe method failed. Browser may not support embedded PDFs."
+                    )
+
+            elif st.session_state.pdf_display_method == "embed":
+                st.write("**Trying Embed Method:**")
+                if not display_pdf_method_2_embed(actual_pdf_path):
+                    st.warning("Embed method failed.")
+
+            elif st.session_state.pdf_display_method == "object":
+                st.write("**Trying Object Method:**")
+                if not display_pdf_method_3_object(actual_pdf_path):
+                    st.warning("Object method failed.")
+
+            else:  # download method
+                st.write("**Download Method:**")
+                display_pdf_method_4_streamlit_native(actual_pdf_path)
+
+            # Always provide download option
+            st.markdown("---")
+            st.subheader("Alternative Access")
+
+            # Create download link
+            download_link = create_download_link(
+                actual_pdf_path, "Pumpkin_Porters_Report.pdf"
+            )
+            st.markdown(download_link, unsafe_allow_html=True)
+
+            # Browser compatibility info
+            st.info("""
+            **🔍 Troubleshooting PDF Display Issues:**
+            
+            - **Chrome/Edge**: Usually works best with iframe method
+            - **Firefox**: May need embed or object method  
+            - **Safari**: Often requires download method
+            - **Mobile browsers**: Usually need download method
+            - **Streamlit Cloud**: iframe method sometimes blocked by browser security
+            
+            If PDF doesn't display, try different methods above or use the download button.
+            """)
 
         else:
             st.error("📄 PDF file not found!")
@@ -183,23 +394,6 @@ def display_pdf(pdf_path):
                 unsafe_allow_html=True,
             )
 
-            # Show current directory contents for debugging
-            st.write("**Current directory contents:**")
-            try:
-                current_files = os.listdir(".")
-                st.write(current_files)
-
-                # Check if pdf folder exists
-                if "pdf" in current_files:
-                    st.write("**Contents of pdf folder:**")
-                    pdf_files = os.listdir("pdf")
-                    st.write(pdf_files)
-                else:
-                    st.warning("⚠️ 'pdf' folder not found in current directory")
-
-            except Exception as e:
-                st.error(f"Error listing directory contents: {str(e)}")
-
             # Provide file upload option as fallback
             st.markdown("---")
             st.subheader("Upload PDF File")
@@ -210,11 +404,20 @@ def display_pdf(pdf_path):
             )
 
             if uploaded_file is not None:
-                # Display uploaded PDF
-                base64_pdf = base64.b64encode(uploaded_file.read()).decode("utf-8")
-                pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="800" type="application/pdf"></iframe>'
-                st.markdown(pdf_display, unsafe_allow_html=True)
-                st.success("✅ PDF uploaded and displayed successfully!")
+                # Try to display uploaded PDF
+                try:
+                    base64_pdf = base64.b64encode(uploaded_file.read()).decode("utf-8")
+                    pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="800" type="application/pdf"></iframe>'
+                    st.markdown(pdf_display, unsafe_allow_html=True)
+                    st.success("✅ PDF uploaded and displayed successfully!")
+                except Exception as e:
+                    st.error(f"Error displaying uploaded PDF: {str(e)}")
+                    st.download_button(
+                        label="📥 Download Uploaded PDF",
+                        data=uploaded_file.getvalue(),
+                        file_name=uploaded_file.name,
+                        mime="application/pdf",
+                    )
 
     except Exception as e:
         st.error(f"❌ Error displaying PDF: {str(e)}")
