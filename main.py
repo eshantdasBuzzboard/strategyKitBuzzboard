@@ -57,6 +57,34 @@ st.markdown(
     background-color: ##000000;
     border-radius: 0.5rem;
 }
+
+.maintenance-banner {
+    background: linear-gradient(90deg, #FFA500, #FF6B35);
+    color: white;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    text-align: center;
+    font-weight: bold;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.disabled-overlay {
+    position: relative;
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.disabled-overlay::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(128, 128, 128, 0.3);
+    border-radius: 0.5rem;
+}
 </style>
 """,
     unsafe_allow_html=True,
@@ -65,6 +93,9 @@ st.markdown(
 # Initialize session state
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
+
+# Configuration - Set this to False to enable chatbot
+CHATBOT_ENABLED = False
 
 # Your transcript string (replace this with your actual transcript)
 TRANSCRIPT = pumpkin_porters_transcript
@@ -164,7 +195,29 @@ async def main():
 
     with tab3:
         st.header("Chat with Assistant")
-        st.write("Ask me about the PDF document, summary, or audio features!")
+
+        # Show maintenance banner if chatbot is disabled
+        if not CHATBOT_ENABLED:
+            st.markdown(
+                """
+                <div class="maintenance-banner">
+                    🔧 Chatbot is temporarily disabled - We're working on improvements!<br>
+                    <small> Thank you for your patience.</small>
+                </div>
+            """,
+                unsafe_allow_html=True,
+            )
+
+            # Alternative: Use Streamlit's built-in warning
+            # st.warning("🔧 **Chatbot Temporarily Disabled**  \nWe're currently working on improvements. Please check back soon!")
+        else:
+            st.write("Ask me about the PDF document, summary, or audio features!")
+
+        # Wrap the chat interface in a container that can be disabled
+        chat_container_class = "disabled-overlay" if not CHATBOT_ENABLED else ""
+
+        if chat_container_class:
+            st.markdown(f'<div class="{chat_container_class}">', unsafe_allow_html=True)
 
         # Display chat history
         chat_container = st.container()
@@ -193,14 +246,19 @@ async def main():
         with st.form("chat_form", clear_on_submit=True):
             user_input = st.text_input(
                 "Type your message:",
-                placeholder="Hello, can you tell me about this document?",
+                placeholder="Chatbot is temporarily disabled..."
+                if not CHATBOT_ENABLED
+                else "Hello, can you tell me about this document?",
+                disabled=not CHATBOT_ENABLED,
             )
             col1, col2 = st.columns([1, 4])
 
             with col1:
-                submit_button = st.form_submit_button("Send", use_container_width=True)
+                submit_button = st.form_submit_button(
+                    "Send", use_container_width=True, disabled=not CHATBOT_ENABLED
+                )
 
-            if submit_button and user_input:
+            if submit_button and user_input and CHATBOT_ENABLED:
                 # Add user message to chat history
                 st.session_state.chat_history.append({
                     "type": "user",
@@ -223,45 +281,51 @@ async def main():
         col1, col2, col3, col4 = st.columns(4)
 
         with col1:
-            if st.button("👋 Say Hello"):
-                st.session_state.chat_history.append({
-                    "type": "user",
-                    "content": "Hello",
-                })
-                st.session_state.chat_history.append({
-                    "type": "bot",
-                    "content": get_bot_response("Hello"),
-                })
-                st.rerun()
+            if st.button("👋 Say Hello", disabled=not CHATBOT_ENABLED):
+                if CHATBOT_ENABLED:
+                    st.session_state.chat_history.append({
+                        "type": "user",
+                        "content": "Hello",
+                    })
+                    st.session_state.chat_history.append({
+                        "type": "bot",
+                        "content": get_bot_response("Hello"),
+                    })
+                    st.rerun()
 
         with col2:
-            if st.button("📄 About PDF"):
-                st.session_state.chat_history.append({
-                    "type": "user",
-                    "content": "Tell me about the PDF",
-                })
-                st.session_state.chat_history.append({
-                    "type": "bot",
-                    "content": get_bot_response("Tell me about the PDF"),
-                })
-                st.rerun()
+            if st.button("📄 About PDF", disabled=not CHATBOT_ENABLED):
+                if CHATBOT_ENABLED:
+                    st.session_state.chat_history.append({
+                        "type": "user",
+                        "content": "Tell me about the PDF",
+                    })
+                    st.session_state.chat_history.append({
+                        "type": "bot",
+                        "content": get_bot_response("Tell me about the PDF"),
+                    })
+                    st.rerun()
 
         with col3:
-            if st.button("📝 About Summary"):
-                st.session_state.chat_history.append({
-                    "type": "user",
-                    "content": "Tell me about the summary",
-                })
-                st.session_state.chat_history.append({
-                    "type": "bot",
-                    "content": get_bot_response("Tell me about the summary"),
-                })
-                st.rerun()
+            if st.button("📝 About Summary", disabled=not CHATBOT_ENABLED):
+                if CHATBOT_ENABLED:
+                    st.session_state.chat_history.append({
+                        "type": "user",
+                        "content": "Tell me about the summary",
+                    })
+                    st.session_state.chat_history.append({
+                        "type": "bot",
+                        "content": get_bot_response("Tell me about the summary"),
+                    })
+                    st.rerun()
 
         with col4:
             if st.button("🔄 Clear Chat"):
                 st.session_state.chat_history = []
                 st.rerun()
+
+        if chat_container_class:
+            st.markdown("</div>", unsafe_allow_html=True)
 
 
 if __name__ == "__main__":
