@@ -53,3 +53,223 @@ Pumpkin Porters’ marketing progress from June to August 2025 shows significant
 
 In summary, Pumpkin Porters is making strong progress in building its local brand presence through social media and advertising. The main areas for improvement are refreshing Facebook ad creatives and reactivating Google Ads to maximize reach and efficiency in the coming months.
 """
+
+junk_text = """Marketing Progress
+Pumpkin Porters
+https://www.facebook.com/people/Pumpkin-Porters/61577839870228/#
+https://tinyurl.com/ycxwea5y
+(817) 456-5484
+https://pumpkinporters.com/
+June – August 2025Big Wins This Month
+Your Brand in Action
+Growth at a Glance
+What’s Coming in September – Game Plan
+Initial Strategy Commitments
+Here’s What We Delivered for You
+How Your Ads Performed
+Quick Actions for You
+Table of
+ContentsBig Wins This Month
+What Does It Mean?
+Pumpkin Porters is growing visibility through Instagram and consistent posting. Facebook Ads expanded in volume but 
+need fresh creatives to control CPC and recover July-level eﬃciency.
+Facebook Ads Delivered  
+Results
+CTR (Click Through Rate)
+CPC (Cost Per Click) 
+469 clicks at $12.14 CTR
+eﬃcient $0.31 in August
+(+110% increase)
+Facebook Posts
+June
+Aug
+5 → 11
+(+548% growth)
+Instagram Impression
+July
+Aug
+60 → 389Initial Strategy Commitments
+At launch, we set follower and engagement targets for Facebook and Instagram, along with a $50 ad spend on 
+Facebook and Google — all designed to build visibility and attract your ideal local audience. These commitments 
+were established to generate early traction and lay the foundation for long-term growth.
+Goals & Current Progress
+Facebook
+Instagram
+Month
+0
+25
+50
+75
+100
+3
+6
+1
+12
+0
+0-5
+50
+15–30
+30–50
+50–70
+Followers
+Initial
+Current
+Target
+Followers
+Month
+0
+10
+20
+30
+40
+3
+6
+1
+12
+0
+0–5
+5–10
+10–18
+18–30
+Initial
+Current
+Target
+3
+What Does It Mean?
+‘Followers’ represent meaningful local leads, most likely to convert into customers. 
+100% review response rate is maintained as part of trust-building strategy.Here’s What We Delivered for You
+Jun 04
+On Going Post
+Initial ongoing campaign content published to start 
+brand visibility.
+Jul 29
+highlight Pumpkin Porters’ unique 
+brand voice.
+On Demand Post
+August 19–21
+Engagement + seasonal promos.
+On-Demand Post
+Aug 14
+New ad creatives launched to sustain CTR and capture 
+fresh audience segments.
+Facebook Ads
+August, 25–28
+Oﬀers + community + month-end push.
+On-demad Post 
+Jul 25
+Facebook Ad
+Two ad campaigns launched to build visibility and drive 
+engagement.Growth at a Glance
+What Does It Mean?
+Instagram drove the strongest growth. Facebook Ads delivered engagement but needs refreshed creatives to reduce CPC 
+and lift CTR back above 12%.
+Metric
+Facebook 
+Posts
+Instagram 
+Posts
+July 
+2025
+June 
+2025
+13
+5
+4
+0
+Change
+▼ –15%
++50%
+Facebook 
+Impressions
+235
+2
+▼ –67%
+Instagram 
+Impressions
+60
+0
++548%
+Aug 
+2025
+11
+6
+77
+389
+Facebook Ads 
+CTR (%)
+12.14
+–
+▼ –16%
+10.15
+Facebook Ads 
+Clicks
+469
+0
+▼ –81%
+88Your Brand in Action
+AD
+ADHow Your Ads Performed
+Facebook advertising campaigns, and here's how they performed for you:
+What Does It Mean?
+Facebook Ads are delivering a strong Click-Through Rate. Pumpkin Porters is steadily building a brand identity.
+Facebook Ads – 
+Awareness & Engagement 
+Campaigns
+Active Campaigns: 6 
+Average CPC: $0.31 ( vs 
+July’s $0.09)
+Delivered 88 clicks at a 
+10.15% Click Through 
+Rate (strong, though 
+from July’s 12.14%)
+Google Ads Status
+Only organic Maps/Search visibility 
+contributed, producing 3 site clicks. 
+Google Ads remain a missed 
+opportunity until reactivated.
+No active Google Ads 
+this month.What’s Coming in September – Game Plan
+Focus Area
+Action
+Goal
+Execution
+Instagram
+Submit OD request for 
+seasonal content
+Lift reach to 500+
+Fulﬁllment will recreate posts 
+(e.g., event highlights, specials).
+Google Ads
+Relaunch local keyword 
+campaigns
+Generate 150+ clicks
+Conﬁrm budget → Fulﬁllment 
+will create ads and relaunch 
+campaigns.
+Facebook Ads
+Request edits for ad 
+creatives
+Improve CTR above 
+12%
+Fulﬁllment will refresh visuals + 
+copy to increase relevance & 
+engagement.
+Social Media
+Share seasonal event stories 
++ reviews
+1,000+ impressions per 
+platform
+Schedule 3–4 posts weekly 
+showcasing fall events & 
+customer experiences.Quick Actions for You
+Submit OD request for event-based posts → Share oﬀers/events (e.g., Halloween sale); 
+Fulﬁllment designs + publishes campaign posts.
+Submit OD request for two ad variations → Fulﬁllment will test creatives and optimize 
+ad performance.
+Request edits for ad creatives → Share customer photos/reviews; Fulﬁllment updates 
+visuals + captions.Instagram visibility is rising (+548%), and Facebook Ads continue to drive engagement. 
+With fresh creatives and Google Ads reactivation, September can build stronger visibility, 
+eﬃciency, and customer conversions.
+Pumpkin Porters is strengthening its local presence with consistent content 
+and engaging ads.
+"""
