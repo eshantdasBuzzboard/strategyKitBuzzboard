@@ -32,6 +32,6 @@ async def create_speech_async(text):
         voice="ash",
         input=text,
         instructions="""Explain like a human is answering to a question.""",
-        speed=1.1,
+        speed=1.15,
     )
     return response.content
