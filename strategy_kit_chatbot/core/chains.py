@@ -13,7 +13,12 @@ class ChatBotResponse(BaseModel):
 
 async def chatbot_reply_chain(junk_data, ai_data, query, chat_history=[]):
     llmr = llm.with_structured_output(ChatBotResponse)
-    input_data = {"junk_data": junk_data, "ai_data": ai_data, "query": query}
+    input_data = {
+        "junk_data": junk_data,
+        "ai_data": ai_data,
+        "query": query,
+        "chat_history": chat_history,
+    }
     chatbot_chain = chat_bot_prompt | llmr
     response = await chatbot_chain.ainvoke(input_data)
     return response.chatbot_response

@@ -27,6 +27,12 @@ Answer the user's query by analyzing the provided data sources. Always prioritiz
 {query}
 </query>
 
+Here is the chat_history so that you have more context of how to respond.
+<chat_history>
+{chat_history}
+</chat_history>
+
+
 ## Instructions:
 
 1. **Primary Analysis:** Use the processed data (`{ai_data}`) as your main source of information, as it has been cleaned and structured for better readability.
