@@ -273,3 +273,16 @@ eﬃciency, and customer conversions.
 Pumpkin Porters is strengthening its local presence with consistent content 
 and engaging ads.
 """
+
+
+level_two_summary = """
+Hey Pumpkin Porters team! We wanted to create this quick audio summary to walk you through the key findings from our latest marketing report.
+
+First, fantastic news on Instagram! Impressions jumped by over 500 percent in August, showing real momentum in our local brand visibility. Facebook posts and ad clicks also saw big increases, and we’re maintaining a perfect review response rate—great job building trust with our audience.
+
+However, we do have some challenges to address. Facebook ad performance dropped in August, with fewer clicks and higher costs. This means it’s time to refresh our ad creatives to get those numbers back up. Also, Google Ads weren’t active last month, so we missed out on potential new customers there.
+
+Looking ahead, our top priorities are: submitting new, seasonal content for Instagram to keep that growth going; relaunching Google Ads to drive at least 150 clicks; and updating Facebook ad visuals and copy to boost engagement. Let’s also keep sharing customer stories and reviews to connect with our community.
+
+In summary, we’re making strong progress, especially on Instagram, but we need to act quickly on ad updates and Google campaigns to keep the momentum. Thanks for your hard work, and let’s keep pushing for even better results this month!
+"""

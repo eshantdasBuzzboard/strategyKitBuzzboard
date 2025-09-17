@@ -9,6 +9,7 @@ from datetime import datetime
 from strategy_kit_core_model.utils.constants import (
     pumpkin_porters_transcript,
     junk_text,
+    level_two_summary,
 )
 from strategy_kit_chatbot.core.chains import chatbot_reply_chain
 
@@ -237,7 +238,7 @@ async def main():
     )
 
     # Create tabs
-    tab1, tab2 = st.tabs(["📝 Summary", "💬 Chatbot"])
+    tab1, tab2, tab3 = st.tabs(["📝 Summary", "💬 Chatbot", "📄 Detailed Report"])
 
     with tab1:
         st.header("Document Summary")
@@ -263,8 +264,8 @@ async def main():
         st.subheader("🔊 Audio Summary")
         display_audio(AUDIO_PATH)
 
-        st.write("**Transcript Summary:**")
-        st.write(pumpkin_porters_transcript)
+        st.write("**Quick Audio Transcript:**")
+        st.write(level_two_summary)
 
     with tab2:
         st.header("Chat with Assistant")
@@ -353,6 +354,10 @@ async def main():
                     file_name=f"chat_history_{st.session_state.chat_session_id}.txt",
                     mime="text/plain",
                 )
+
+    with tab3:
+        st.header("Detailed Report Summary")
+        st.write(pumpkin_porters_transcript)
 
 
 if __name__ == "__main__":
