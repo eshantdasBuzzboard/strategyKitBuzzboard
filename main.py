@@ -548,7 +548,7 @@ def display_chat_with_audio():
                     st.audio(audio_data, format="audio/wav")
 
 
-async def get_bot_response(user_input, chat_history=[]):
+async def get_bot_response(user_input, chat_history=[], enable_audio=True):
     """Enhanced chatbot with chat history context"""
     user_input = user_input.lower().strip()
     print("++++==============+++")
@@ -564,12 +564,14 @@ async def get_bot_response(user_input, chat_history=[]):
                 chat_history=chat_history,
             )
 
-            # Generate audio
-            try:
-                audio_bytes = await create_speech_async(response)
-            except Exception as e:
-                print(f"Error generating audio: {e}")
-                audio_bytes = None
+            # Generate audio only if enabled
+            audio_bytes = None
+            if enable_audio:
+                try:
+                    audio_bytes = await create_speech_async(response)
+                except Exception as e:
+                    print(f"Error generating audio: {e}")
+                    audio_bytes = None
 
             return response, audio_bytes
 
@@ -643,12 +645,8 @@ async def main():
 
                 # Get both text and audio response
                 bot_response, audio_bytes = await get_bot_response(
-                    user_input, st.session_state.chat_history
+                    user_input, st.session_state.chat_history, enable_audio
                 )
-
-                # Only include audio if enabled
-                if not enable_audio:
-                    audio_bytes = None
 
                 # Add bot response with audio
                 add_message_to_history("bot", bot_response, audio_bytes)
