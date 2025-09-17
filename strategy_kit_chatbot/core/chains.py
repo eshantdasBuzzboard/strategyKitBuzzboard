@@ -2,6 +2,7 @@ from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from strategy_kit_chatbot.core.prompts import chat_bot_prompt
 from pydantic import BaseModel
+from openai import AsyncOpenAI
 
 load_dotenv()
 llm = ChatOpenAI(model="gpt-4.1")
@@ -22,3 +23,15 @@ async def chatbot_reply_chain(junk_data, ai_data, query, chat_history=[]):
     chatbot_chain = chat_bot_prompt | llmr
     response = await chatbot_chain.ainvoke(input_data)
     return response.chatbot_response
+
+
+async def create_speech_async(text):
+    client = AsyncOpenAI()
+    response = await client.audio.speech.create(
+        model="gpt-4o-mini-tts",
+        voice="ash",
+        input=text,
+        instructions="""Explain like a human is answering to a question.""",
+        speed=1.1,
+    )
+    return response.content

@@ -6,13 +6,12 @@ from pathlib import Path
 import json
 from datetime import datetime
 
-
-from strategy_kit_chatbot.core.chains import chatbot_reply_chain
+from strategy_kit_chatbot.core.chains import chatbot_reply_chain, create_speech_async
 
 pumpkin_porters_transcript = """
-Here’s a detailed summary of the key points, analysis, and important details from the document:
+Here's a detailed summary of the key points, analysis, and important details from the document:
 
-Pumpkin Porters’ marketing progress from June to August 2025 shows significant growth in social media visibility and engagement, especially on Instagram. The brand has been consistently posting and running Facebook Ads, which have expanded in volume. However, the report notes that Facebook Ads now require fresh creatives to control the cost per click (CPC) and recover the efficiency seen in July.
+Pumpkin Porters' marketing progress from June to August 2025 shows significant growth in social media visibility and engagement, especially on Instagram. The brand has been consistently posting and running Facebook Ads, which have expanded in volume. However, the report notes that Facebook Ads now require fresh creatives to control the cost per click (CPC) and recover the efficiency seen in July.
 
 **Big Wins and Key Metrics:**
 - Instagram impressions increased dramatically from 60 in July to 389 in August, a 548% growth.
@@ -54,7 +53,7 @@ Pumpkin Porters’ marketing progress from June to August 2025 shows significant
 **Summary of Key Insights:**
 - Instagram visibility is rapidly increasing, and Facebook Ads are still driving engagement, but both need ongoing creative updates to maintain efficiency.
 - Google Ads are currently underutilized and represent a significant opportunity for growth if reactivated.
-- Consistent content and engagement strategies are strengthening Pumpkin Porters’ local presence.
+- Consistent content and engagement strategies are strengthening Pumpkin Porters' local presence.
 - The focus for September is on refreshing ad creatives, relaunching Google Ads, and leveraging seasonal content to boost visibility, engagement, and customer conversions.
 
 **Graph Analysis:**
@@ -74,9 +73,9 @@ https://pumpkinporters.com/
 June – August 2025Big Wins This Month
 Your Brand in Action
 Growth at a Glance
-What’s Coming in September – Game Plan
+What's Coming in September – Game Plan
 Initial Strategy Commitments
-Here’s What We Delivered for You
+Here's What We Delivered for You
 How Your Ads Performed
 Quick Actions for You
 Table of
@@ -147,14 +146,14 @@ Current
 Target
 3
 What Does It Mean?
-‘Followers’ represent meaningful local leads, most likely to convert into customers. 
-100% review response rate is maintained as part of trust-building strategy.Here’s What We Delivered for You
+'Followers' represent meaningful local leads, most likely to convert into customers. 
+100% review response rate is maintained as part of trust-building strategy.Here's What We Delivered for You
 Jun 04
 On Going Post
 Initial ongoing campaign content published to start 
 brand visibility.
 Jul 29
-highlight Pumpkin Porters’ unique 
+highlight Pumpkin Porters' unique 
 brand voice.
 On Demand Post
 August 19–21
@@ -228,18 +227,18 @@ Awareness & Engagement
 Campaigns
 Active Campaigns: 6 
 Average CPC: $0.31 ( vs 
-July’s $0.09)
+July's $0.09)
 Delivered 88 clicks at a 
 10.15% Click Through 
 Rate (strong, though 
-from July’s 12.14%)
+from July's 12.14%)
 Google Ads Status
 Only organic Maps/Search visibility 
 contributed, producing 3 site clicks. 
 Google Ads remain a missed 
 opportunity until reactivated.
 No active Google Ads 
-this month.What’s Coming in September – Game Plan
+this month.What's Coming in September – Game Plan
 Focus Area
 Action
 Goal
@@ -285,19 +284,17 @@ Pumpkin Porters is strengthening its local presence with consistent content
 and engaging ads.
 """
 
-
 level_two_summary = """
 Hey Pumpkin Porters team! We wanted to create this quick audio summary to walk you through the key findings from our latest marketing report.
 
-First, fantastic news on Instagram! Impressions jumped by over 500 percent in August, showing real momentum in our local brand visibility. Facebook posts and ad clicks also saw big increases, and we’re maintaining a perfect review response rate—great job building trust with our audience.
+First, fantastic news on Instagram! Impressions jumped by over 500 percent in August, showing real momentum in our local brand visibility. Facebook posts and ad clicks also saw big increases, and we're maintaining a perfect review response rate—great job building trust with our audience.
 
-However, we do have some challenges to address. Facebook ad performance dropped in August, with fewer clicks and higher costs. This means it’s time to refresh our ad creatives to get those numbers back up. Also, Google Ads weren’t active last month, so we missed out on potential new customers there.
+However, we do have some challenges to address. Facebook ad performance dropped in August, with fewer clicks and higher costs. This means it's time to refresh our ad creatives to get those numbers back up. Also, Google Ads weren't active last month, so we missed out on potential new customers there.
 
-Looking ahead, our top priorities are: submitting new, seasonal content for Instagram to keep that growth going; relaunching Google Ads to drive at least 150 clicks; and updating Facebook ad visuals and copy to boost engagement. Let’s also keep sharing customer stories and reviews to connect with our community.
+Looking ahead, our top priorities are: submitting new, seasonal content for Instagram to keep that growth going; relaunching Google Ads to drive at least 150 clicks; and updating Facebook ad visuals and copy to boost engagement. Let's also keep sharing customer stories and reviews to connect with our community.
 
-In summary, we’re making strong progress, especially on Instagram, but we need to act quickly on ad updates and Google campaigns to keep the momentum. Thanks for your hard work, and let’s keep pushing for even better results this month!
+In summary, we're making strong progress, especially on Instagram, but we need to act quickly on ad updates and Google campaigns to keep the momentum. Thanks for your hard work, and let's keep pushing for even better results this month!
 """
-
 
 # Set page config
 st.set_page_config(
@@ -344,16 +341,25 @@ st.markdown(
     border-left: 4px solid #1f77b4;
     margin: 1rem 0;
 }
+.audio-container {
+    margin: 0.5rem 0;
+    padding: 0.5rem;
+    background-color: #f8f9fa;
+    border-radius: 0.25rem;
+    border-left: 3px solid #007bff;
+}
 </style>
 """,
     unsafe_allow_html=True,
 )
 
-# Initialize session state
+# Initialize session state with audio storage
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 if "chat_session_id" not in st.session_state:
     st.session_state.chat_session_id = datetime.now().strftime("%Y%m%d_%H%M%S")
+if "audio_responses" not in st.session_state:
+    st.session_state.audio_responses = {}
 
 # File paths
 BASE_DIR = Path(__file__).parent
@@ -386,13 +392,23 @@ def find_file(primary_path, alternative_paths):
     return None
 
 
-def add_message_to_history(message_type, content):
-    """Add a message to chat history"""
+def add_message_to_history(message_type, content, audio_data=None):
+    """Add a message to chat history with optional audio"""
+    message_id = f"{len(st.session_state.chat_history)}_{datetime.now().timestamp()}"
+
     message = {
+        "id": message_id,
         "type": message_type,
         "content": content,
+        "timestamp": datetime.now().isoformat(),
+        "has_audio": audio_data is not None,
     }
+
     st.session_state.chat_history.append(message)
+
+    # Store audio separately to avoid serialization issues
+    if audio_data is not None:
+        st.session_state.audio_responses[message_id] = audio_data
 
 
 def display_pdf(pdf_path):
@@ -496,12 +512,49 @@ def display_audio(audio_path):
             st.audio(uploaded_audio.read())
 
 
+def display_chat_with_audio():
+    """Display chat history with audio playback"""
+    for message in st.session_state.chat_history:
+        if message["type"] == "user":
+            st.markdown(
+                f"""
+                <div class="chat-message user">
+                    <div style="color: black;"><strong>You:</strong> {message["content"]}</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+        else:
+            st.markdown(
+                f"""
+                <div class="chat-message bot">
+                    <div style="color: black;"><strong>Assistant:</strong> {message["content"]}</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+            # Play audio if available
+            if (
+                message.get("has_audio")
+                and message["id"] in st.session_state.audio_responses
+            ):
+                audio_data = st.session_state.audio_responses[message["id"]]
+                if audio_data:
+                    st.markdown(
+                        '<div class="audio-container">🔊 Audio Response:</div>',
+                        unsafe_allow_html=True,
+                    )
+                    st.audio(audio_data, format="audio/wav")
+
+
 async def get_bot_response(user_input, chat_history=[]):
     """Enhanced chatbot with chat history context"""
     user_input = user_input.lower().strip()
     print("++++==============+++")
     print(chat_history)
     print(user_input)
+
     if user_input:
         with st.spinner("Thinking..."):
             response = await chatbot_reply_chain(
@@ -511,10 +564,18 @@ async def get_bot_response(user_input, chat_history=[]):
                 chat_history=chat_history,
             )
 
-        return response
+            # Generate audio
+            try:
+                audio_bytes = await create_speech_async(response)
+            except Exception as e:
+                print(f"Error generating audio: {e}")
+                audio_bytes = None
+
+            return response, audio_bytes
 
     # Default response
-    return "I'm focused on helping with the Pumpkin Porters Social Performance Progress report. I can assist with PDF access, audio summary, report content questions, and navigation help. Could you please rephrase your question?"
+    default_response = "I'm focused on helping with the Pumpkin Porters Social Performance Progress report. I can assist with PDF access, audio summary, report content questions, and navigation help. Could you please rephrase your question?"
+    return default_response, None
 
 
 async def main():
@@ -556,48 +617,53 @@ async def main():
     with tab2:
         st.header("Chat with Assistant")
 
-        # Display chat history
-        for message in st.session_state.chat_history:
-            if message["type"] == "user":
-                st.markdown(
-                    f"""
-                <div class="chat-message user">
-                    <div style="color: black;"><strong>You:</strong> {message["content"]}</div>
-                </div>
-                """,
-                    unsafe_allow_html=True,
-                )
-            else:
-                st.markdown(
-                    f"""
-                <div class="chat-message bot">
-                    <div style="color: black;"><strong>Assistant:</strong> {message["content"]}</div>
-                </div>
-                """,
-                    unsafe_allow_html=True,
-                )
+        # Display chat history with audio
+        display_chat_with_audio()
 
         # Chat input
         with st.form("chat_form", clear_on_submit=True):
-            user_input = st.text_input(
-                "Type your message:",
-                placeholder="Hello, can you tell me about this document?",
-            )
+            col1, col2 = st.columns([4, 1])
+
+            with col1:
+                user_input = st.text_input(
+                    "Type your message:",
+                    placeholder="Hello, can you tell me about this document?",
+                )
+
+            with col2:
+                enable_audio = st.checkbox(
+                    "🔊 Audio", value=True, help="Enable audio responses"
+                )
+
             submit_button = st.form_submit_button("Send", use_container_width=True)
 
             if submit_button and user_input:
                 # Add user message
                 add_message_to_history("user", user_input)
 
-                # Generate bot response with chat history
-                bot_response = await get_bot_response(
+                # Get both text and audio response
+                bot_response, audio_bytes = await get_bot_response(
                     user_input, st.session_state.chat_history
                 )
 
-                # Add bot response
-                add_message_to_history("bot", bot_response)
+                # Only include audio if enabled
+                if not enable_audio:
+                    audio_bytes = None
 
+                # Add bot response with audio
+                add_message_to_history("bot", bot_response, audio_bytes)
+
+                # Rerun to show the new messages
                 st.rerun()
+
+        # Clear chat history button
+        if st.session_state.chat_history:
+            col1, col2 = st.columns([1, 4])
+            with col1:
+                if st.button("🗑️ Clear Chat", type="secondary"):
+                    st.session_state.chat_history = []
+                    st.session_state.audio_responses = {}
+                    st.rerun()
 
         # Export chat history
         if st.session_state.chat_history:
@@ -644,6 +710,11 @@ async def main():
     with tab3:
         st.header("Detailed Report Summary")
         st.write(pumpkin_porters_transcript)
+
+        # Add PDF display option here too
+        st.markdown("---")
+        st.subheader("📄 View Full PDF Report")
+        display_pdf(PDF_PATH)
 
 
 if __name__ == "__main__":
